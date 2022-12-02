@@ -37,7 +37,27 @@ object RPSscore extends App:
     own + winPoints
   end determineScore
 
-  private def findScore() =
+  /** determineWinStatus is used in the second half of the excercise, and determines what the
+   * player needs to play in order to achieve the desired result. Following this, the method
+   * returns the score of the round.
+   * @param opp     The value of the opponents move
+   * @param letter  The desired win status
+   * @return        The score gathered from the round*/
+  private def determineWinStatus(opp: Int, letter: String) =
+    val ownVal =  (if letter == "X" then
+                    if opp == 1 then 3 else opp - 1
+                  else if letter == "Y" then
+                    opp
+                  else
+                    if opp == 3 then 1 else opp +1)
+    determineScore(opp, ownVal)
+  end determineWinStatus
+
+
+  /** findScore can execute either the first or second half of the exercise. Most of the functionality is in the abuve functions.
+   * @param round1  A variable determining whether the first or second half of the exercise is being executed
+   * @return        The score of the match*/
+  private def findScore(round1: Boolean) =
     //Initialising variables to read the file
     try
       val file = File("./src/main/scala/day2/data.txt")
@@ -49,9 +69,12 @@ object RPSscore extends App:
         var currScore = 0
         while line != null do
           val moves = line.split(" ", 2)
-          val score = moves.map(x => convertData(x)).reduce((x, y) => determineScore(x, y))
+          val score = (if round1 then
+                        moves.map(x => convertData(x)).reduce((x, y) => determineScore(x, y))
+                      else
+                        determineWinStatus(convertData(moves(0)), moves(1))
+                      )
           currScore += score
-          println(s"${line}: ${score}")
           line = lineReader.readLine()
         currScore
       finally
@@ -62,6 +85,7 @@ object RPSscore extends App:
       case _ => println("Problems with reading the file")
   end findScore
 
-  println(s"Total score of the match: ${findScore()}")
+  println(s"Total score of the match given moves: ${findScore(true)}")
+  println(s"Total score of the match given win status: ${findScore(false)}")
 
 end RPSscore
