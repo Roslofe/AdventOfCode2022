@@ -10,9 +10,10 @@ import scala.math.abs
 object positionTracer extends App:
 
   /** Moves the rope head and tail according to the data.
-   * @return  The number of locations visited by the tail
+   * @param first   Determines which half of the exercise is being executed
+   * @return        The number of locations visited by the tail
    */
-  private def traceSteps() =
+  private def traceSteps(first: Boolean) =
     try
       val file = File("./src/main/scala/day9/data.txt")
       val fileReader = FileReader(file)
@@ -85,14 +86,27 @@ object positionTracer extends App:
         //Positions of the head and the tail (x, y)
         var headPos = (0, 0)
         var tailPos = (0, 0)
+        //In part 2, the rope consists of nine additional parts, whose positions are stored here
+        var tails = Array.fill(9)((0, 0))
         //Go through each step, and update the positions of the head and tail accordingly
         while stepOrder.nonEmpty do
           val current = stepOrder.dequeue
           headPos = updateHPos(current, headPos._1, headPos._2)
-          //If the distance between the head and the tail is more than 1, move the tail
-          if shouldMove(tailPos, headPos) then
-            tailPos = moveTail(tailPos, headPos)
-            visited.append(tailPos)
+          if first then
+            //If the distance between the head and the tail is more than 1, move the tail
+            if shouldMove(tailPos, headPos) then
+              tailPos = moveTail(tailPos, headPos)
+              visited.append(tailPos)
+          //The same procedure as in part 1, but for nine knots. The last one's position is tracked in a separate array.
+          else
+            var i = 0
+            while i < tails.length do
+              if shouldMove(tails(i), if i == 0 then headPos else tails(i - 1)) then
+                val newPos = moveTail(tails(i), if i == 0 then headPos else tails(i - 1))
+                tails.update(i, newPos)
+                if i == 8 then
+                  visited.append(newPos)
+              i += 1
 
         //Return the number of distinct positions the tail got
         visited.toArray.distinct.length
@@ -105,7 +119,8 @@ object positionTracer extends App:
       case _ => println("Problems with reading the file")
   end traceSteps
 
-  println(s"Visited ${traceSteps()} different locations")
+  println(s"Visited ${traceSteps(true)} different locations")
+  println(s"With a longer rope, visited ${traceSteps(false)} different locations")
 
 end positionTracer
 
