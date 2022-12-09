@@ -7,9 +7,10 @@ import java.io._
 object dirNavigator  extends App:
 
   /** sizeSum goes through the data, calculates the sizes of the directories, and reports the desired sum.
-   * @return  The sum of directories with size less than 100 000.
+   * @param first   A variable determining which half of the exercise is being evaluated
+   * @return        The sum of directories with size less than 100 000.
    */
-  private def sizeSum() =
+  private def sizeSum(first: Boolean) =
     try
       val file = File("./src/main/scala/day7/data.txt")
       val fileReader = FileReader(file)
@@ -55,8 +56,14 @@ object dirNavigator  extends App:
 
         //Go through the commands
         traverseFiles()
-        //Return the sum of the approppriate values
-        dirSizes.filter(_ <= 100000).sum
+        //In the first half of the exercise, the sum of the sizes of directories with size at most 100000 is desired.
+        if first then
+          dirSizes.filter(_ <= 100000).sum
+        /** In the second half, the size of the smallest individual directory, that can be removed to have
+         * 30 000 000 empty space out of a total of 70 000 000 */
+        else
+          val spaceToFree = dirSizes.max - (70000000 - 30000000)
+          dirSizes.filter(_ >= spaceToFree).min
 
       finally
         fileReader.close()
@@ -66,7 +73,8 @@ object dirNavigator  extends App:
       case _ => println("Problems with reading the file")
   end sizeSum
 
-  println(s"The sum of the directories with size 100 000 or less: ${sizeSum()}")
+  println(s"The sum of the directories with size 100 000 or less: ${sizeSum(true)}")
+  println(s"The size of the smallest directory that can be deleted to achieve 30 000 000 empty space: ${sizeSum(false)}")
 
 end dirNavigator
 
