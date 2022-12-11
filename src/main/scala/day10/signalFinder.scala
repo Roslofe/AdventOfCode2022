@@ -81,7 +81,7 @@ object signalFinder extends App:
         lineReader.close()
       catch
         case notFound: FileNotFoundException => println("File wasn't connected correctly")
-        //case _ => println("Problems with reading the file")
+        case _ => println("Problems with reading the file")
   end findStrengths
 
   println(s"Sum of strenghts: ${findStrengths(true)}")
