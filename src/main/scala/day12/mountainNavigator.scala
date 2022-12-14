@@ -7,9 +7,11 @@ import scala.math.abs
  * Only small differences of altitude can happen at each step. For more information, see: https://adventofcode.com/2022/day/12 */
 object mountainNavigator extends App:
 
-  /** Forms a graph from the given data, and then traverses it to find the shortest path to the given target
-   * @return  The number of steps needed to travel from the start node to the end node */
-  private def findRoute() =
+  /** Forms a graph from the given data, and then traverses it to find the shortest path to the given target-
+   * In the second half,no explisit start point is given, instead all locations with the lowest altitude are considered start points
+   * @param first   Determines which half of the exercise is being evaluated
+   * @return        The number of steps needed to travel from the start node to the end node */
+  private def findRoute(first: Boolean) =
     try
       val file = File("./src/main/scala/day12/data.txt")
       val fileReader = FileReader(file)
@@ -25,8 +27,10 @@ object mountainNavigator extends App:
           elevationData += line.toCharArray.map(x=> if x == 'S' then ('a'.toInt, 1) else if x == 'E' then ('z'.toInt, -1) else (x.toInt, 0))
           line = lineReader.readLine()
 
-        //Store the distances of each point from the start point. By default it's -1, when it hasn't been visited. 2nd parameter is the parent node, and 3rd is whether it has been selected
-        val locations = Array.fill(elevationData.length * elevationData(0).length)((-1, -1, false))
+        //Store the distances of each point from the start point. By default it's -1, when it hasn't been visited. 2nd parameter is the parent node, and 3rd is whether it has been selected, 4th = elevation
+        val locations = elevationData.flatten.map(x => (-1, -1, false, x._1)).toArray
+        //Array.fill(elevationData.length * elevationData(0).length)((-1, -1, false, -1))
+
         /** formEdges processes the elevation data provided, and transforms it into edges that connect locations.
          * Practically forms a simple graph.
          * @return The edges between nodes, the indices of the start and end nodes.
@@ -75,8 +79,12 @@ object mountainNavigator extends App:
         val start = edgeFormat._2
         val end = edgeFormat._3
 
-        //Update the distance of the start point to 0
-        locations.update(start, (0, -1, false))
+        //If in the first half, update the distance of the start point to 0
+        if first then
+          locations.update(start, (0, -1, false, locations(start)._4))
+        else
+          //In the second half, set the distance of the end point to 0
+          locations.update(end, (0, -1, false, locations(end)._4))
         var inaccessible = false
         //Modified version of Djikstra's algorithm (this doesn't use weights, as all edges have the same weight)
         //Finds the shortest distance to the end point
@@ -89,7 +97,7 @@ object mountainNavigator extends App:
             val closest = locations.indexOf(unvisited.minBy(_._1))
             val closestInfo = locations(closest)
             //Mark the chosen edge as done
-            locations.update(closest, (closestInfo._1, closestInfo._2, true))
+            locations.update(closest, (closestInfo._1, closestInfo._2, true, closestInfo._4))
             //Get the neighbour nodes that haven't been selected yet
             val neighs = edges.filter(x => x._1 == closest).map(x => (x._2, locations(x._2))).filter(x => !x._2._3)
             //Go through each neighbour. If they don't have a parent node yet, add them with the current as the parent
@@ -98,11 +106,15 @@ object mountainNavigator extends App:
             while i < neighs.length do
               val currNeigh = neighs(i)
               if currNeigh._2._2 == -1 || currNeigh._2._2 + 1 > closestInfo._2 + 1 then
-                locations.update(currNeigh._1, (closestInfo._1 + 1, closest, false))
+                locations.update(currNeigh._1, (closestInfo._1 + 1, closest, false, currNeigh._2._4))
               i += 1
 
-        //Return the distance to the end point
-        locations(end)._1
+        if first then
+          //Return the distance to the end point
+          locations(end)._1
+        else
+          //Find the minimum distance to a point with the altitude of 97
+          locations.filter(x  => x._4 == 'a'.toInt && x._3).minBy(_._1)._1
 
       finally
         fileReader.close()
@@ -112,7 +124,8 @@ object mountainNavigator extends App:
       case _ => println("Problems with reading the file")
   end findRoute
 
-  println(s"Shortest distance to the end point: ${findRoute()}")
+  println(s"Shortest distance to the end point: ${findRoute(true)}")
+  println(s"Shortest distance from smallest altitude: ${findRoute(false)}")
   
 end mountainNavigator
 
